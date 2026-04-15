@@ -1,17 +1,25 @@
-require("@nomicfoundation/hardhat-toolbox");
-require("dotenv").config();
+import "@nomicfoundation/hardhat-toolbox";
+import dotenv from "dotenv";
 
-const { API_URL, PRIVATE_KEY } = process.env;
+dotenv.config();
 
-module.exports = {
-  solidity: "0.8.24",
-  networks: {
-    hardhat: {
-      chainId: 1337,
+/** @type import('hardhat/config').HardhatUserConfig */
+export default {
+  solidity: {
+    version: "0.8.24",
+    settings: {
+      // This is the specific fix for the 'mcopy' error
+      evmVersion: "cancun",
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
+  },
+  networks: {
     sepolia: {
-      url: API_URL,
-      accounts: [`0x${PRIVATE_KEY}`],
+      url: process.env.API_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
 };
