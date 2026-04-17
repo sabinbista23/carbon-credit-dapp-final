@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
+import { ethers } from "ethers";
 
 const MyToken = ({ setAccount }) => {
-  const ethers = require("ethers");
   const [token, setToken] = useState(null);
   const [purchasedListings, setPurchasedListings] = useState([]);
   const [soldListings, setSoldListings] = useState([]);
@@ -12,7 +12,7 @@ const MyToken = ({ setAccount }) => {
   const [listings, setListings] = useState([]);
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(true);
 
-  const fetchListings = async (token, account) => {
+  const fetchListings = useCallback(async (token, account) => {
     try {
       const listedFilter = token.filters.TokenListed();
       const listingEvents = await token.queryFilter(listedFilter);
@@ -104,9 +104,9 @@ const MyToken = ({ setAccount }) => {
         </div>
       );
     }
-  };
+  }, []);
 
-  const fetchPurchasedListings = async (token, account) => {
+  const fetchPurchasedListings = useCallback(async (token, account) => {
     try {
       const purchasedFilter = token.filters.TokenPurchased(
         account,
@@ -133,9 +133,9 @@ const MyToken = ({ setAccount }) => {
         </div>
       );
     }
-  };
+  }, []);
 
-  const fetchSoldListings = async (token, account) => {
+  const fetchSoldListings = useCallback(async (token, account) => {
     try {
       const soldListingEvents = await token.queryFilter(
         token.filters.TokenPurchased(null, account)
@@ -155,7 +155,7 @@ const MyToken = ({ setAccount }) => {
         </div>
       );
     }
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -173,18 +173,25 @@ const MyToken = ({ setAccount }) => {
       }
     };
     init();
-  });
+  }, [fetchListings, fetchPurchasedListings, fetchSoldListings, setAccount]);
 
   const handleDelete = async (listingIndex) => {
     if (token) {
       try {
         const { account, provider } = await connectToEthereum();
 
-        const signature = await generateSignature(account, provider);
+        const signature = await generateSignature({
+          action: "DELETE",
+          account,
+          provider,
+          contractAddress: token.address,
+          seller: account,
+          listingIndex,
+        });
         const tx = await token.deleteListing(listingIndex, signature);
         await tx.wait();
         toast.success("Listing deleted successfully!");
-        fetchListings(token);
+        fetchListings(token, account);
       } catch (error) {
         toast.error(
           <div>

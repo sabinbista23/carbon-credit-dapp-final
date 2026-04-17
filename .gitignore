@@ -1,5 +1,7 @@
 node_modules
 .env
+.hardhat-appdata/
+.hardhat-localappdata/
 
 # Hardhat files
 /cache

@@ -81,9 +81,8 @@ const Navbar = ({ account }) => {
                 <div className="hidden sm:ml-6 md:ml-auto sm:block">
                   <div className="flex space-x-4">
                     {navigation.map((item) => (
-                      <Link to={item.href}>
+                      <Link key={item.name} to={item.href}>
                         <p
-                          key={item.name}
                           className={classNames(
                             item.current
                               ? "bg-gray-900 text-black"
@@ -101,7 +100,7 @@ const Navbar = ({ account }) => {
                       className={classNames(
                         "text-[#000] hover:bg-[#D8EFD3] hover:text-black rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out"
                       )}
-                      onClick={() => handleCopyToClipboard(account)}
+                      onClick={() => account && handleCopyToClipboard(account)}
                     >
                       {isLoading
                         ? "Loading Account..."

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { uploadFileToPinata, deleteFileFromPinata } from "../utils/PinataIPFS";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ethers } from "ethers";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
 
 import * as pdfjsLib from "pdfjs-dist/webpack";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const MintToken = ({ account, setAccount }) => {
-  const ethers = require("ethers");
   const [mintAmount, setMintAmount] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,7 +44,7 @@ const MintToken = ({ account, setAccount }) => {
       }
     };
     init();
-  });
+  }, [setAccount]);
 
   useEffect(() => {
     if (isUploading) {
@@ -186,10 +186,19 @@ const MintToken = ({ account, setAccount }) => {
         return;
       }
 
-      const signature = await generateSignature(account, provider);
+      const amountWei = ethers.utils.parseUnits(mintAmount, 18);
+      const signature = await generateSignature({
+        action: "MINT",
+        account,
+        provider,
+        contractAddress: token.address,
+        to: account,
+        amount: amountWei,
+        ipfsHash,
+      });
       const tx = await token.mint(
         account,
-        ethers.utils.parseUnits(mintAmount, 18),
+        amountWei,
         ipfsHash,
         signature
       );
@@ -202,7 +211,8 @@ const MintToken = ({ account, setAccount }) => {
       } catch (deleteError) {
         toast.error(
           <div>
-            Failed to delete file from Pinata <br /> {deleteError}
+            Failed to delete file from Pinata <br />{" "}
+            {deleteError?.message ? deleteError.message : String(deleteError)}
           </div>
         );
       }

@@ -17,6 +17,14 @@ Before getting started, ensure you have the following installed:
 - A supported wallet like MetaMask for testing blockchain interactions.
 
 ## Getting Started
+
+### Windows PowerShell note
+If PowerShell blocks running `npm`/`npx` scripts, use `npm.cmd` / `npx.cmd`, or run:
+
+```
+Set-ExecutionPolicy -Scope Process Bypass
+```
+
 1. Clone the Repository
 ```
 git clone https://github.com/dteti-sys-rsch/carbon-credit-app.git
@@ -40,9 +48,11 @@ npx hardhat run scripts/deploy.js --network localhost
 ```
 6. Set .env variables for 
 ```
-API_URL="YOUR_SECRET_API_URL" // network set
-PRIVATE_KEY="YOUR_ACCOUNT_ADDRESS" // address account
+API_URL="YOUR_SEPOLIA_RPC_URL" // Sepolia RPC URL (or localhost RPC if testing locally)
+PRIVATE_KEY="YOUR_PRIVATE_KEY" // deployer wallet private key (Sepolia funded if using Sepolia)
 SECRET_MESSAGE="YOUR_SECRET_MESSAGE" // authentication key
+PINATA_API_KEY="YOUR_PINATA_API_KEY" // for backend upload to IPFS via Pinata
+PINATA_SECRET_API_KEY="YOUR_PINATA_SECRET_API_KEY" // for backend upload to IPFS via Pinata
 ```
 7. Install React Application Dependencies
 ```
@@ -51,15 +61,20 @@ npm install
 ```
 8. Set .env variables for React App
 ```
-REACT_APP_PINATA_API_KEY="YOUR PINATA API KEY"
-REACT_APP_PINATA_SECRET_API_KEY="YOUR PINATA SECRET API KEY"
-REACT_APP_SECRET_MESSAGE="YOUR_SECRET_MESSAGE" // authentication key
-REACT_APP_TOKEN_ADDRESS="YOUR_CONTRACT_ADDRESS" // address contract
-REACT_APP_EXPECTED_NETWORK_ID="YOUR_NETWORK_ID" // network
+REACT_APP_SECRET_MESSAGE="YOUR_SECRET_MESSAGE" // must match SECRET_MESSAGE
+REACT_APP_TOKEN_ADDRESS="YOUR_CONTRACT_ADDRESS" // deployed CarbonToken address
+REACT_APP_EXPECTED_NETWORK_ID="11155111" // Sepolia chainId (use 31337 for localhost)
 ```
 9. Run the React Application
 ```
 npm start
+```
+
+### Run the backend (Pinata proxy)
+The backend keeps your Pinata keys off the browser and exposes a local API for file upload/unpin.
+
+```
+npm run server:start
 ```
 10. Start interacting with access in http://localhost:3000
 
@@ -69,6 +84,9 @@ npm start
 - test/: Automated test files for the smart contracts.
 - src/: Front-end application files.
 - artifacts/: Compiled contract output files.
+
+## How signing works (anti-tamper)
+When minting / listing / buying / deleting a listing, the front-end creates an off-chain signature that is bound to the action parameters (amounts, listing index, IPFS hash, contract address, and chainId). The smart contract verifies this signature before executing the action.
 
 ## Contributing
 Contributions are welcome! Please submit a pull request or open an issue to discuss proposed changes.

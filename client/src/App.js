@@ -11,7 +11,11 @@ import UpdateContractMessage from "./pages/UpdateContractMessage";
 
 function App() {
   const [account, setAccount] = useState("");
-  useEffect(() => {}, [account]);
+
+  useEffect(() => {
+    // Logic for account changes can go here
+  }, [account]);
+
   return (
     <div>
       <Routes>

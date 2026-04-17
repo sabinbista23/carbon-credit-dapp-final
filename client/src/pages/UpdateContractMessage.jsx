@@ -16,7 +16,7 @@ const UpdateContractMessage = ({ setAccount }) => {
       }
     };
     init();
-  });
+  }, [setAccount]);
 
   const updateMessage = async () => {
     if (!newMessage.trim()) {

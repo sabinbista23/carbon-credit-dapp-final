@@ -52,11 +52,87 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         string ipfsHash
     );
 
-    modifier onlyWithSignature(bytes memory signature) {
-        bytes32 messageHash = authorizedMessage.toEthSignedMessageHash();
+    function _requireValidSignature(
+        bytes32 payloadHash,
+        bytes memory signature
+    ) internal view {
+        bytes32 messageHash = payloadHash.toEthSignedMessageHash();
         address signer = messageHash.recover(signature);
         require(signer == msg.sender, "Invalid signature");
-        _;
+    }
+
+    function _hashForMint(
+        address to,
+        uint256 amount,
+        string memory ipfsHash
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "MINT",
+                    authorizedMessage,
+                    address(this),
+                    block.chainid,
+                    to,
+                    amount,
+                    keccak256(bytes(ipfsHash))
+                )
+            );
+    }
+
+    function _hashForList(
+        address seller,
+        uint256 amountCTKN,
+        uint256 priceETH
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "LIST",
+                    authorizedMessage,
+                    address(this),
+                    block.chainid,
+                    seller,
+                    amountCTKN,
+                    priceETH
+                )
+            );
+    }
+
+    function _hashForBuy(
+        address buyer,
+        address seller,
+        uint256 listingIndex
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "BUY",
+                    authorizedMessage,
+                    address(this),
+                    block.chainid,
+                    buyer,
+                    seller,
+                    listingIndex
+                )
+            );
+    }
+
+    function _hashForDelete(
+        address seller,
+        uint256 listingIndex
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "DELETE",
+                    authorizedMessage,
+                    address(this),
+                    block.chainid,
+                    seller,
+                    listingIndex
+                )
+            );
     }
 
     function mint(
@@ -64,7 +140,8 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         uint256 amount,
         string memory ipfsHash,
         bytes memory signature
-    ) public onlyWithSignature(signature) {
+    ) public {
+        _requireValidSignature(_hashForMint(to, amount, ipfsHash), signature);
         _mint(to, amount);
         emit CertificateMinted(to, amount, ipfsHash);
     }
@@ -73,7 +150,11 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         uint256 amountCTKN,
         uint256 priceETH,
         bytes memory signature
-    ) external onlyWithSignature(signature) {
+    ) external {
+        _requireValidSignature(
+            _hashForList(msg.sender, amountCTKN, priceETH),
+            signature
+        );
         require(
             balanceOf(msg.sender) >= amountCTKN,
             "Insufficient CTKN balance"
@@ -94,7 +175,11 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         address seller,
         uint256 listingIndex,
         bytes memory signature
-    ) external payable onlyWithSignature(signature) {
+    ) external payable {
+        _requireValidSignature(
+            _hashForBuy(msg.sender, seller, listingIndex),
+            signature
+        );
         Listing storage listing = listings[seller][listingIndex];
         require(listing.active, "Listing is not active");
         require(msg.value >= listing.priceETH, "Insufficient ETH sent");
@@ -113,7 +198,11 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function deleteListing(
         uint256 listingIndex,
         bytes memory signature
-    ) external onlyWithSignature(signature) {
+    ) external {
+        _requireValidSignature(
+            _hashForDelete(msg.sender, listingIndex),
+            signature
+        );
         require(
             listingIndex < listings[msg.sender].length,
             "Invalid listing index"

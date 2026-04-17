@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ethers } from "ethers";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
 
 const SellToken = ({ account, setAccount }) => {
-  const ethers = require("ethers");
   const [ctknBalance, setCtknBalance] = useState(0);
   const [amountCTKN, setAmountCTKN] = useState("");
   const [priceETH, setPriceETH] = useState("");
@@ -28,7 +28,7 @@ const SellToken = ({ account, setAccount }) => {
       }
     };
     init();
-  });
+  }, [setAccount]);
 
   useEffect(() => {
     if (isListingCreated === true) {
@@ -46,12 +46,22 @@ const SellToken = ({ account, setAccount }) => {
     }
     if (token) {
       try {
-        const { account, provider } = await connectToEthereum();
-        const signature = await generateSignature(account, provider);
+        const { account, provider, token } = await connectToEthereum();
+        const amountWei = ethers.utils.parseUnits(amountCTKN, 18);
+        const priceWei = ethers.utils.parseEther(priceETH);
+        const signature = await generateSignature({
+          action: "LIST",
+          account,
+          provider,
+          contractAddress: token.address,
+          seller: account,
+          amountCTKN: amountWei,
+          priceETH: priceWei,
+        });
 
         const tx = await token.listTokenForSale(
-          ethers.utils.parseUnits(amountCTKN, 18),
-          ethers.utils.parseEther(priceETH),
+          amountWei,
+          priceWei,
           signature
         );
         await tx.wait();

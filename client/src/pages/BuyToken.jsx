@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
 import { ToastContainer, toast } from "react-toastify";
+import { ethers } from "ethers";
 
 const BuyToken = ({ account, setAccount }) => {
-  const ethers = require("ethers");
   const [token, setToken] = useState(null);
   const [listings, setListings] = useState([]);
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(true);
 
-  const fetchListings = async (token, account) => {
+  const fetchListings = useCallback(async (token, account) => {
     try {
       const listedFilter = token.filters.TokenListed();
       const listingEvents = await token.queryFilter(listedFilter);
@@ -93,7 +93,7 @@ const BuyToken = ({ account, setAccount }) => {
         </div>
       );
     }
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -107,19 +107,27 @@ const BuyToken = ({ account, setAccount }) => {
       }
     };
     init();
-  });
+  }, [fetchListings, setAccount]);
 
   const handleBuy = async (seller, listingIndex, priceETH) => {
     if (token) {
       try {
         const { account, provider } = await connectToEthereum();
-        const signature = await generateSignature(account, provider);
+        const signature = await generateSignature({
+          action: "BUY",
+          account,
+          provider,
+          contractAddress: token.address,
+          buyer: account,
+          seller,
+          listingIndex,
+        });
         const tx = await token.buyToken(seller, listingIndex, signature, {
           value: ethers.utils.parseEther(priceETH),
         });
         await tx.wait();
         toast.success("Purchase successful!");
-        fetchListings(token);
+        fetchListings(token, account);
       } catch (error) {
         toast.error(
           <div>

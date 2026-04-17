@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ethers } from "ethers";
 import { connectToEthereum } from "../utils/Logic";
 
 const Homepage = ({ account, setAccount }) => {
-  const ethers = require("ethers");
   const [ctknBalance, setCtknBalance] = useState(0);
   const [ethBalance, setEthBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +44,7 @@ const Homepage = ({ account, setAccount }) => {
       }
     };
     init();
-  });
+  }, [setAccount]);
 
   return (
     <div className="container mx-auto px-12 py-8 md:px-20">
