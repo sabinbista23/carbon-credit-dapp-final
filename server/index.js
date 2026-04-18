@@ -30,6 +30,13 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/", (_req, res) => {
+  res
+    .status(200)
+    .type("text/plain")
+    .send("OK. Try GET /health or use /api/pinata/* endpoints.");
+});
+
 // Upload a file to Pinata (IPFS) securely from the server (no keys in the browser)
 app.post("/api/pinata/pinFile", upload.single("file"), async (req, res) => {
   try {
@@ -54,8 +61,12 @@ app.post("/api/pinata/pinFile", upload.single("file"), async (req, res) => {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+      // eslint-disable-next-line no-console
+      console.error("Pinata upload failed:", response.status, response.statusText, data);
       return res.status(502).json({
         error: "Pinata upload failed",
+        pinataStatus: response.status,
+        pinataStatusText: response.statusText,
         details: data,
       });
     }
@@ -83,8 +94,12 @@ app.delete("/api/pinata/unpin/:hash", async (req, res) => {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
+      // eslint-disable-next-line no-console
+      console.error("Pinata unpin failed:", response.status, response.statusText, data);
       return res.status(502).json({
         error: "Pinata unpin failed",
+        pinataStatus: response.status,
+        pinataStatusText: response.statusText,
         details: data,
       });
     }
@@ -100,4 +115,3 @@ app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`Pinata backend listening on http://localhost:${port}`);
 });
-

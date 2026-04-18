@@ -25,6 +25,10 @@ export const uploadFileToPinata = async (file, setIsUploading) => {
 };
 
 export const deleteFileFromPinata = async (hash, setIsDeleting) => {
+  if (!hash) {
+    throw new Error("Missing IPFS hash to delete.");
+  }
+
   const url = `/api/pinata/unpin/${hash}`;
 
   setIsDeleting(true);

@@ -206,8 +206,33 @@ const MintToken = ({ account, setAccount }) => {
       setTokensMinted(true);
     } catch (error) {
       setTokensMinted(false);
+      const serverData = error?.response?.data;
+      const detailMessage =
+        serverData?.details?.error ||
+        serverData?.error ||
+        (typeof serverData === "string" ? serverData : null);
+      const detailText =
+        detailMessage && typeof detailMessage === "object"
+          ? JSON.stringify(detailMessage)
+          : detailMessage;
+      const pinataStatus = serverData?.pinataStatus
+        ? ` (Pinata: ${serverData.pinataStatus} ${serverData.pinataStatusText || ""})`
+        : "";
+      toast.error(
+        <div>
+          Mint Token CTKN Failed
+          <br />
+          {detailText
+            ? `${detailText}${pinataStatus}`
+            : error?.message
+              ? error.message
+              : String(error)}
+        </div>
+      );
       try {
-        await deleteFileFromPinata(ipfsHash, setIsDeleting);
+        if (ipfsHash) {
+          await deleteFileFromPinata(ipfsHash, setIsDeleting);
+        }
       } catch (deleteError) {
         toast.error(
           <div>
