@@ -31,10 +31,55 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/", (_req, res) => {
-  res
-    .status(200)
-    .type("text/plain")
-    .send("OK. Try GET /health or use /api/pinata/* endpoints.");
+  res.status(200).type("text/plain").send("OK. Try GET /health or use /api/pinata/* endpoints.");
+});
+
+// Pin JSON to IPFS via Pinata (useful for metadata)
+app.post("/api/pinata/pinJSON", async (req, res) => {
+  try {
+    if (!req.body || typeof req.body !== "object") {
+      return res.status(400).json({ error: "Missing JSON body" });
+    }
+
+    // Accept either:
+    // - { name, content: {...} }
+    // - {...} (pins the whole object, without a name)
+    const name = typeof req.body.name === "string" ? req.body.name : undefined;
+    const content =
+      req.body && typeof req.body.content === "object" && req.body.content !== null
+        ? req.body.content
+        : req.body;
+
+    const payload = {
+      pinataContent: content,
+      ...(name ? { pinataMetadata: { name } } : {}),
+    };
+
+    const response = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getPinataHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      // eslint-disable-next-line no-console
+      console.error("Pinata pinJSON failed:", response.status, response.statusText, data);
+      return res.status(502).json({
+        error: "Pinata pinJSON failed",
+        pinataStatus: response.status,
+        pinataStatusText: response.statusText,
+        details: data,
+      });
+    }
+
+    return res.json(data);
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Server error" });
+  }
 });
 
 // Upload a file to Pinata (IPFS) securely from the server (no keys in the browser)

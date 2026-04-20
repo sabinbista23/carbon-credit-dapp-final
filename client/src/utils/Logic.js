@@ -14,8 +14,7 @@ const getAuthorizedSalt = () => {
   return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(secretMessage));
 };
 
-const hashUtf8 = (value) =>
-  ethers.utils.keccak256(ethers.utils.toUtf8Bytes(value || ""));
+const hashUtf8 = (value) => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(value || ""));
 
 export const connectToEthereum = async () => {
   if (!window.ethereum) {
@@ -38,11 +37,7 @@ export const connectToEthereum = async () => {
 
   // Connect to the CarbonCreditToken contract
   const contractAddress = getRequiredEnv("REACT_APP_TOKEN_ADDRESS");
-  const token = new ethers.Contract(
-    contractAddress,
-    CarbonCreditTokenABI.abi,
-    signer
-  );
+  const token = new ethers.Contract(contractAddress, CarbonCreditTokenABI.abi, signer);
 
   return { provider, signer, account, token };
 };
@@ -98,8 +93,6 @@ export const generateSignature = async ({
     }
   }
 
-  const signature = await signer.signMessage(
-    ethers.utils.arrayify(payloadHash)
-  );
+  const signature = await signer.signMessage(ethers.utils.arrayify(payloadHash));
   return signature;
 };

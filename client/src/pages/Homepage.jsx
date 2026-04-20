@@ -33,9 +33,7 @@ const Homepage = ({ account, setAccount }) => {
         setCtknBalance(ethers.utils.formatUnits(ctknBalance, 18));
 
         const ethBalance = await token.provider.getBalance(account);
-        const formattedEthBalance = parseFloat(
-          ethers.utils.formatEther(ethBalance)
-        ).toFixed(4);
+        const formattedEthBalance = parseFloat(ethers.utils.formatEther(ethBalance)).toFixed(4);
         setEthBalance(formattedEthBalance);
 
         setIsLoading(false);
@@ -52,11 +50,7 @@ const Homepage = ({ account, setAccount }) => {
       <div className="text-left mb-6">
         <div className="text-lg">
           {account && `${getGreeting()}, `}
-          {isLoading ? (
-            "Loading..."
-          ) : (
-            <span className="font-semibold">{account}</span>
-          )}
+          {isLoading ? "Loading..." : <span className="font-semibold">{account}</span>}
         </div>
       </div>
       <div className="flex flex-col space-y-6 justify-center">
@@ -74,9 +68,7 @@ const Homepage = ({ account, setAccount }) => {
         </div>
       </div>
       <div className="mt-10 flex flex-col items-center">
-        <div className="text-lg text-center mb-3">
-          Have a Carbon Quota Certificates?
-        </div>
+        <div className="text-lg text-center mb-3">Have a Carbon Quota Certificates?</div>
         <Link to="/mint-token">
           <button
             type="button"

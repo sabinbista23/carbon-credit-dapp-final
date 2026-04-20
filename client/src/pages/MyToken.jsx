@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
 import { ethers } from "ethers";
+import { getTxUrl } from "../utils/explorer";
 
 const MyToken = ({ setAccount }) => {
   const [token, setToken] = useState(null);
@@ -50,9 +51,7 @@ const MyToken = ({ setAccount }) => {
         const listingIndex = event.args.listingIndex.toNumber();
 
         if (activeListingsMap[seller]) {
-          const listing = activeListingsMap[seller].find(
-            (l) => l.listingIndex === listingIndex
-          );
+          const listing = activeListingsMap[seller].find((l) => l.listingIndex === listingIndex);
           if (listing) {
             listing.active = false;
           }
@@ -64,9 +63,7 @@ const MyToken = ({ setAccount }) => {
         const listingIndex = event.args.listingIndex.toNumber();
 
         if (activeListingsMap[seller]) {
-          const listing = activeListingsMap[seller].find(
-            (l) => l.listingIndex === listingIndex
-          );
+          const listing = activeListingsMap[seller].find((l) => l.listingIndex === listingIndex);
           if (listing) {
             listing.active = false;
           }
@@ -90,9 +87,7 @@ const MyToken = ({ setAccount }) => {
       });
 
       // Filter listings to only include those from the connected account
-      const myListings = activeListings.filter(
-        (listing) => listing.seller === account
-      );
+      const myListings = activeListings.filter((listing) => listing.seller === account);
 
       setListings(myListings);
       setIsLoadingAvailable(false);
@@ -108,12 +103,7 @@ const MyToken = ({ setAccount }) => {
 
   const fetchPurchasedListings = useCallback(async (token, account) => {
     try {
-      const purchasedFilter = token.filters.TokenPurchased(
-        account,
-        null,
-        null,
-        null
-      );
+      const purchasedFilter = token.filters.TokenPurchased(account, null, null, null);
       const purchasedEvents = await token.queryFilter(purchasedFilter);
 
       const purchasedListings = purchasedEvents.map((event) => ({
@@ -206,14 +196,9 @@ const MyToken = ({ setAccount }) => {
   };
 
   return (
-    <div
-      id="purchased-listings"
-      className="container mx-auto px-12 py-8 md:px-20"
-    >
+    <div id="purchased-listings" className="container mx-auto px-12 py-8 md:px-20">
       <ToastContainer />
-      <h2 className="text-3xl font-bold text-center mb-6">
-        My Carbon Token Listings
-      </h2>
+      <h2 className="text-3xl font-bold text-center mb-6">My Carbon Token Listings</h2>
       <div className="space-y-4">
         {isLoadingAvailable ? (
           <div>Loading...</div>
@@ -231,23 +216,33 @@ const MyToken = ({ setAccount }) => {
               >
                 Delete
               </button>
-              <a
-                href={`https://sepolia.etherscan.io/tx/${listing.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out ml-3"
-              >
-                View on Etherscan
-              </a>
+              {(() => {
+                const txUrl = getTxUrl(
+                  process.env.REACT_APP_EXPECTED_NETWORK_ID,
+                  listing.transactionHash
+                );
+                return txUrl ? (
+                  <a
+                    href={txUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out ml-3"
+                  >
+                    View on Explorer
+                  </a>
+                ) : (
+                  <span className="ml-3 text-sm text-gray-700 break-all">
+                    Tx: {listing.transactionHash}
+                  </span>
+                );
+              })()}
             </div>
           ))
         ) : (
           <div className="text-lg">No listings has been made.</div>
         )}
       </div>
-      <h2 className="text-3xl font-bold text-center mb-6 pt-8">
-        Purchased Carbon Token
-      </h2>
+      <h2 className="text-3xl font-bold text-center mb-6 pt-8">Purchased Carbon Token</h2>
       <div className="space-y-4">
         {isLoading ? (
           <div>Loading...</div>
@@ -260,23 +255,33 @@ const MyToken = ({ setAccount }) => {
               <p className="text-lg font-semibold">Seller: {listing.seller}</p>
               <p>Amount: {listing.amountCTKN} CTKN</p>
               <p className="mb-4">Price: {listing.priceETH} ETH</p>
-              <a
-                href={`https://sepolia.etherscan.io/tx/${listing.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out"
-              >
-                View on Etherscan
-              </a>
+              {(() => {
+                const txUrl = getTxUrl(
+                  process.env.REACT_APP_EXPECTED_NETWORK_ID,
+                  listing.transactionHash
+                );
+                return txUrl ? (
+                  <a
+                    href={txUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out"
+                  >
+                    View on Explorer
+                  </a>
+                ) : (
+                  <span className="text-sm text-gray-700 break-all">
+                    Tx: {listing.transactionHash}
+                  </span>
+                );
+              })()}
             </div>
           ))
         ) : (
           <div className="text-lg">No listings has been purchased.</div>
         )}
       </div>
-      <h2 className="text-3xl font-bold text-center mb-6 pt-8">
-        Carbon Token Sold
-      </h2>
+      <h2 className="text-3xl font-bold text-center mb-6 pt-8">Carbon Token Sold</h2>
       <div className="space-y-4">
         {isLoadingSold ? (
           <div>Loading...</div>
@@ -289,14 +294,26 @@ const MyToken = ({ setAccount }) => {
               <p className="text-lg font-semibold">Buyer: {listing.buyer}</p>
               <p>Amount: {listing.amountCTKN} CTKN</p>
               <p className="mb-4">Price: {listing.priceETH} ETH</p>
-              <a
-                href={`https://sepolia.etherscan.io/tx/${listing.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#071952] text-[#fff] px-4 py-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out"
-              >
-                View on Etherscan
-              </a>
+              {(() => {
+                const txUrl = getTxUrl(
+                  process.env.REACT_APP_EXPECTED_NETWORK_ID,
+                  listing.transactionHash
+                );
+                return txUrl ? (
+                  <a
+                    href={txUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#071952] text-[#fff] px-4 py-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out"
+                  >
+                    View on Explorer
+                  </a>
+                ) : (
+                  <span className="text-sm text-gray-700 break-all">
+                    Tx: {listing.transactionHash}
+                  </span>
+                );
+              })()}
             </div>
           ))
         ) : (

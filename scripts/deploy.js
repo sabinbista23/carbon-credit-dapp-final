@@ -1,14 +1,22 @@
-import pkg from 'hardhat';
+import pkg from "hardhat";
 const { ethers } = pkg;
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
+
+const getExplorerBaseUrl = (chainId) => {
+  if (chainId === 11155111n) return "https://sepolia.etherscan.io";
+  return null;
+};
 
 async function main() {
   // 1. Get the deployer wallet
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
+
+  const { chainId, name } = await ethers.provider.getNetwork();
+  console.log("Network:", name, `(chainId ${chainId})`);
 
   // 2. Get the Contract Factory
   const CarbonToken = await ethers.getContractFactory("CarbonToken");
@@ -31,9 +39,19 @@ async function main() {
 
   // 6. Retrieve the final address
   const deployedAddress = await token.getAddress();
+  const deployTx = token.deploymentTransaction();
 
   console.log("CarbonToken successfully deployed.");
   console.log("Contract Address:", deployedAddress);
+
+  if (deployTx?.hash) {
+    console.log("Deploy Tx Hash:", deployTx.hash);
+    const explorer = getExplorerBaseUrl(chainId);
+    if (explorer) {
+      console.log("Explorer (tx):", `${explorer}/tx/${deployTx.hash}`);
+      console.log("Explorer (address):", `${explorer}/address/${deployedAddress}`);
+    }
+  }
 }
 
 main()

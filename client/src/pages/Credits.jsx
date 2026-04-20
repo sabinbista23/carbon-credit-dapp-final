@@ -46,9 +46,7 @@ const Credits = ({ account, setAccount }) => {
         const listingIndex = event.args.listingIndex.toNumber();
 
         if (activeListingsMap[seller]) {
-          const listing = activeListingsMap[seller].find(
-            (l) => l.listingIndex === listingIndex
-          );
+          const listing = activeListingsMap[seller].find((l) => l.listingIndex === listingIndex);
           if (listing) {
             listing.active = false;
           }
@@ -60,9 +58,7 @@ const Credits = ({ account, setAccount }) => {
         const listingIndex = event.args.listingIndex.toNumber();
 
         if (activeListingsMap[seller]) {
-          const listing = activeListingsMap[seller].find(
-            (l) => l.listingIndex === listingIndex
-          );
+          const listing = activeListingsMap[seller].find((l) => l.listingIndex === listingIndex);
           if (listing) {
             listing.active = false;
           }
@@ -124,10 +120,7 @@ const Credits = ({ account, setAccount }) => {
   };
 
   return (
-    <div
-      id="available-listings"
-      className="container mx-auto px-12 py-8 md:px-20"
-    >
+    <div id="available-listings" className="container mx-auto px-12 py-8 md:px-20">
       <ToastContainer />
       <h2 className="text-3xl font-bold text-center mb-6">Credits</h2>
       <ul className="space-y-4">
@@ -135,10 +128,7 @@ const Credits = ({ account, setAccount }) => {
           <div>Loading...</div>
         ) : listings.length > 0 ? (
           listings.map((listing, index) => (
-            <li
-              key={index}
-              className="bg-white p-6 rounded-lg shadow-lg border-2 border-[#5DEBD7]"
-            >
+            <li key={index} className="bg-white p-6 rounded-lg shadow-lg border-2 border-[#5DEBD7]">
               <p className="text-lg font-semibold">Seller: {listing.seller}</p>
               <p>Amount: {listing.amountCTKN} CTKN</p>
               <p>Price: {listing.priceETH} ETH</p>
@@ -146,11 +136,7 @@ const Credits = ({ account, setAccount }) => {
                 {listing.seller !== account && listing.active && (
                   <button
                     onClick={() =>
-                      handleBuy(
-                        listing.seller,
-                        listing.listingIndex,
-                        listing.priceETH
-                      )
+                      handleBuy(listing.seller, listing.listingIndex, listing.priceETH)
                     }
                     className="bg-[#254336] text-white px-4 py-2 mt-2 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out"
                   >

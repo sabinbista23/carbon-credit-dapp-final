@@ -7,8 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
+contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGuard {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -31,6 +32,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
     mapping(address => Listing[]) public listings;
     bytes32 private authorizedMessage;
+    mapping(bytes32 => bool) public mintedCertificates;
 
     event TokenListed(
         address indexed seller,
@@ -51,6 +53,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         uint256 amount,
         string ipfsHash
     );
+    event CertificateDuplicateRejected(address indexed account, string ipfsHash);
 
     function _requireValidSignature(
         bytes32 payloadHash,
@@ -142,6 +145,14 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         bytes memory signature
     ) public {
         _requireValidSignature(_hashForMint(to, amount, ipfsHash), signature);
+        if (bytes(ipfsHash).length > 0) {
+            bytes32 certificateHash = keccak256(bytes(ipfsHash));
+            if (mintedCertificates[certificateHash]) {
+                emit CertificateDuplicateRejected(to, ipfsHash);
+                revert("Certificate already minted");
+            }
+            mintedCertificates[certificateHash] = true;
+        }
         _mint(to, amount);
         emit CertificateMinted(to, amount, ipfsHash);
     }
@@ -175,22 +186,38 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         address seller,
         uint256 listingIndex,
         bytes memory signature
-    ) external payable {
+    ) external payable nonReentrant {
         _requireValidSignature(
             _hashForBuy(msg.sender, seller, listingIndex),
             signature
         );
+        require(
+            listingIndex < listings[seller].length,
+            "Invalid listing index"
+        );
         Listing storage listing = listings[seller][listingIndex];
         require(listing.active, "Listing is not active");
-        require(msg.value >= listing.priceETH, "Insufficient ETH sent");
-        _transfer(address(this), msg.sender, listing.amountCTKN);
-        payable(seller).transfer(msg.value);
+        uint256 price = listing.priceETH;
+        require(msg.value >= price, "Insufficient ETH sent");
+
+        uint256 amountCTKN = listing.amountCTKN;
         listing.active = false;
+
+        _transfer(address(this), msg.sender, amountCTKN);
+
+        (bool okSeller, ) = payable(seller).call{value: price}("");
+        require(okSeller, "Seller payment failed");
+
+        uint256 refund = msg.value - price;
+        if (refund > 0) {
+            (bool okBuyer, ) = payable(msg.sender).call{value: refund}("");
+            require(okBuyer, "Refund failed");
+        }
         emit TokenPurchased(
             msg.sender,
             seller,
-            listing.amountCTKN,
-            listing.priceETH,
+            amountCTKN,
+            price,
             listingIndex
         );
     }
@@ -217,7 +244,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function updateAuthorizedMessage(
         string memory newMessage
     ) external onlyOwner {
-        authorizedMessage = keccak256(bytes(newMessage));
+        authorizedMessage = keccak256(abi.encodePacked(newMessage));
     }
 
     receive() external payable {}

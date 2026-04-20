@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ethers } from "ethers";
 import { connectToEthereum, generateSignature } from "../utils/Logic";
+import { getTxUrl } from "../utils/explorer";
 
 import * as pdfjsLib from "pdfjs-dist/webpack";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -196,12 +197,7 @@ const MintToken = ({ account, setAccount }) => {
         amount: amountWei,
         ipfsHash,
       });
-      const tx = await token.mint(
-        account,
-        amountWei,
-        ipfsHash,
-        signature
-      );
+      const tx = await token.mint(account, amountWei, ipfsHash, signature);
       await tx.wait();
       setTokensMinted(true);
     } catch (error) {
@@ -225,8 +221,8 @@ const MintToken = ({ account, setAccount }) => {
           {detailText
             ? `${detailText}${pinataStatus}`
             : error?.message
-              ? error.message
-              : String(error)}
+            ? error.message
+            : String(error)}
         </div>
       );
       try {
@@ -252,10 +248,7 @@ const MintToken = ({ account, setAccount }) => {
           <div className="text-xl font-bold mb-4 text-center">
             Mint Carbon Quota Certificates to CTKN
           </div>
-          <form
-            onSubmit={handleMint}
-            className="flex flex-col items-center space-y-4 w-full"
-          >
+          <form onSubmit={handleMint} className="flex flex-col items-center space-y-4 w-full">
             <label className="self-start text-left" htmlFor="certificate">
               Choose Certificate File (PDF)
             </label>
@@ -287,9 +280,7 @@ const MintToken = ({ account, setAccount }) => {
           </form>
         </div>
         <div className="w-full self-start">
-          <h2 className="text-xl font-bold mb-4 text-center">
-            Minting History
-          </h2>
+          <h2 className="text-xl font-bold mb-4 text-center">Minting History</h2>
           {isLoading ? (
             <p>Loading...</p>
           ) : mintingHistory.length > 0 ? (
@@ -306,14 +297,26 @@ const MintToken = ({ account, setAccount }) => {
                   >
                     View Certificate
                   </a>
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${entry.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out ml-3"
-                  >
-                    View on Etherscan
-                  </a>
+                  {(() => {
+                    const txUrl = getTxUrl(
+                      process.env.REACT_APP_EXPECTED_NETWORK_ID,
+                      entry.transactionHash
+                    );
+                    return txUrl ? (
+                      <a
+                        href={txUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#071952] text-[#fff] px-4 py-2 mt-2 rounded-lg hover:bg-[#088395] transition duration-300 ease-in-out ml-3"
+                      >
+                        View on Explorer
+                      </a>
+                    ) : (
+                      <span className="ml-3 text-sm text-gray-700 break-all">
+                        Tx: {entry.transactionHash}
+                      </span>
+                    );
+                  })()}
                 </li>
               ))}
             </ul>

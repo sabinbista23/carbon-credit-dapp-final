@@ -61,10 +61,7 @@ const UpdateContractMessage = ({ setAccount }) => {
           onChange={(e) => setNewMessage(e.target.value)}
           className="mb-4 p-2 border border-gray-700 rounded"
         />
-        <button
-          onClick={updateMessage}
-          className="bg-[#254336] p-3 rounded-lg text-white"
-        >
+        <button onClick={updateMessage} className="bg-[#254336] p-3 rounded-lg text-white">
           Update Authorized Message
         </button>
       </div>

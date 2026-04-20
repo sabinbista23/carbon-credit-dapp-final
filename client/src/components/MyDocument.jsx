@@ -79,19 +79,14 @@ const MyDocument = ({ recipient }) => {
         <Text style={styles.text}>Presented to</Text>
         <Text style={styles.highlight}>{recipient}</Text>
         <Text style={styles.text}></Text>
-        <Text style={styles.highlight}>
-          {carbonOffsetValue} MT of CO2 emissions
-        </Text>
+        <Text style={styles.highlight}>{carbonOffsetValue} MT of CO2 emissions</Text>
         <Text style={styles.text}>
-          This document is valid for tokenization of CO2 emissions into token
-          CTKN.
+          This document is valid for tokenization of CO2 emissions into token CTKN.
         </Text>
         <View style={styles.signature}>
           <View>
             <Text style={styles.signatureText}>Mufidus Sani</Text>
-            <Text style={styles.signatureText}>
-              Minister of Environment and Forestry
-            </Text>
+            <Text style={styles.signatureText}>Minister of Environment and Forestry</Text>
           </View>
         </View>
         <Text style={styles.signatureText}>EIN: 37-1461679</Text>

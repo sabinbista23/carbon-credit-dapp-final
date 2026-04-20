@@ -1,10 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-} from "@headlessui/react";
+import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -102,9 +98,7 @@ const Navbar = ({ account }) => {
                       )}
                       onClick={() => account && handleCopyToClipboard(account)}
                     >
-                      {isLoading
-                        ? "Loading Account..."
-                        : shortenText(account, 10)}
+                      {isLoading ? "Loading Account..." : shortenText(account, 10)}
                     </p>
                   </div>
                 </div>

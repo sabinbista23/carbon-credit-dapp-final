@@ -59,11 +59,7 @@ const SellToken = ({ account, setAccount }) => {
           priceETH: priceWei,
         });
 
-        const tx = await token.listTokenForSale(
-          amountWei,
-          priceWei,
-          signature
-        );
+        const tx = await token.listTokenForSale(amountWei, priceWei, signature);
         await tx.wait();
         setIsListingCreated(true);
         const ctknBalance = await token.balanceOf(account);
@@ -90,18 +86,14 @@ const SellToken = ({ account, setAccount }) => {
       <div className="mb-8 p-6 bg-[#254336] text-white rounded-2xl shadow-lg">
         <div className="text-center text-2xl font-normal">
           Carbon Token Balance:{" "}
-          <span className="font-bold">
-            {isLoading ? `Loading...` : `${ctknBalance} CTKN`}
-          </span>
+          <span className="font-bold">{isLoading ? `Loading...` : `${ctknBalance} CTKN`}</span>
         </div>
       </div>
       <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-[#A1EEBD]">
         <h2 className="text-2xl font-bold mb-6">Sell Carbon Token </h2>
         <form onSubmit={handleListing} className="space-y-6">
           <div>
-            <label className="block text-lg font-medium mb-2">
-              Amount to List:
-            </label>
+            <label className="block text-lg font-medium mb-2">Amount to List:</label>
             <input
               placeholder="Enter amount of CTKN"
               type="number"
