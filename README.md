@@ -2,9 +2,9 @@
 
 ## Overview
 
-The Carbon Credit App is a blockchain-based platform that facilitates the issuance, transfer, and management of carbon credits using smart contracts. It includes a React front end, an Express backend (Pinata proxy), and a Hardhat project for deployment/testing.
+The Carbon Credit App is a blockchain-based platform that perform creating / minting new carbon-carbon tokens, transfering, and management of carbon credits using smart contracts. It includes a React front end, an Express backend (Pinata proxy), and a Hardhat project for deployment/testing.
 
-## Prerequisites
+##  tools to set up before the project to run.
 
 - Node.js + npm
 - MetaMask (browser extension)
@@ -176,10 +176,18 @@ Paste your Sepolia evidence here for the report/demo:
 
 ## Code quality
 
-This repo uses Prettier for basic code formatting.
+This repo uses automated code-quality tools (run locally and in CI):
 
-- Check formatting: `npm.cmd run format:check`
-- Auto-format: `npm.cmd run format`
+- Prettier (formatting)
+  - Check formatting: `npm.cmd run format:check`
+  - Auto-format: `npm.cmd run format`
+- ESLint (JavaScript/Node linting for backend/scripts/tests)
+  - Run: `npm.cmd run lint`
+- Solhint (Solidity linting for smart contracts)
+  - Run: `npm.cmd run solhint`
+- Combined check (recommended before pushing): `npm.cmd run quality`
+
+CI: GitHub Actions workflow runs these checks on push/PR in `.github/workflows/ci.yml`.
 
 ## Project Structure
 
