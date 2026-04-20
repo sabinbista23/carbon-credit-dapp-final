@@ -1,17 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGuard {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
+
+    error InvalidSignature();
+    error CertificateAlreadyMinted();
+    error InsufficientCTKNBalance();
+    error InvalidListingIndex();
+    error ListingNotActive();
+    error InsufficientEthSent();
+    error SellerPaymentFailed();
+    error RefundFailed();
+    error CannotDeleteInactiveListing();
 
     constructor(
         address initialOwner,
@@ -61,7 +71,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
     ) internal view {
         bytes32 messageHash = payloadHash.toEthSignedMessageHash();
         address signer = messageHash.recover(signature);
-        require(signer == msg.sender, "Invalid signature");
+        if (signer != msg.sender) revert InvalidSignature();
     }
 
     function _hashForMint(
@@ -149,7 +159,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
             bytes32 certificateHash = keccak256(bytes(ipfsHash));
             if (mintedCertificates[certificateHash]) {
                 emit CertificateDuplicateRejected(to, ipfsHash);
-                revert("Certificate already minted");
+                revert CertificateAlreadyMinted();
             }
             mintedCertificates[certificateHash] = true;
         }
@@ -166,10 +176,7 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
             _hashForList(msg.sender, amountCTKN, priceETH),
             signature
         );
-        require(
-            balanceOf(msg.sender) >= amountCTKN,
-            "Insufficient CTKN balance"
-        );
+        if (balanceOf(msg.sender) < amountCTKN) revert InsufficientCTKNBalance();
         _transfer(msg.sender, address(this), amountCTKN);
         listings[msg.sender].push(
             Listing({amountCTKN: amountCTKN, priceETH: priceETH, active: true})
@@ -191,14 +198,11 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
             _hashForBuy(msg.sender, seller, listingIndex),
             signature
         );
-        require(
-            listingIndex < listings[seller].length,
-            "Invalid listing index"
-        );
+        if (listingIndex >= listings[seller].length) revert InvalidListingIndex();
         Listing storage listing = listings[seller][listingIndex];
-        require(listing.active, "Listing is not active");
+        if (!listing.active) revert ListingNotActive();
         uint256 price = listing.priceETH;
-        require(msg.value >= price, "Insufficient ETH sent");
+        if (msg.value < price) revert InsufficientEthSent();
 
         uint256 amountCTKN = listing.amountCTKN;
         listing.active = false;
@@ -206,12 +210,12 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
         _transfer(address(this), msg.sender, amountCTKN);
 
         (bool okSeller, ) = payable(seller).call{value: price}("");
-        require(okSeller, "Seller payment failed");
+        if (!okSeller) revert SellerPaymentFailed();
 
         uint256 refund = msg.value - price;
         if (refund > 0) {
             (bool okBuyer, ) = payable(msg.sender).call{value: refund}("");
-            require(okBuyer, "Refund failed");
+            if (!okBuyer) revert RefundFailed();
         }
         emit TokenPurchased(
             msg.sender,
@@ -230,12 +234,9 @@ contract CarbonToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGu
             _hashForDelete(msg.sender, listingIndex),
             signature
         );
-        require(
-            listingIndex < listings[msg.sender].length,
-            "Invalid listing index"
-        );
+        if (listingIndex >= listings[msg.sender].length) revert InvalidListingIndex();
         Listing storage listing = listings[msg.sender][listingIndex];
-        require(listing.active, "Cannot delete an inactive listing");
+        if (!listing.active) revert CannotDeleteInactiveListing();
         _transfer(address(this), msg.sender, listing.amountCTKN);
         listing.active = false;
         emit ListingDeleted(msg.sender, listingIndex);

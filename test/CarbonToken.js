@@ -4,7 +4,7 @@ import pkg from "hardhat";
 const { ethers } = pkg;
 
 describe("CarbonToken", function () {
-  let CarbonToken, carbonToken, owner, addr1, addr2, signers;
+  let CarbonToken, carbonToken, owner, addr1, addr2;
   let authorizedMessage;
 
   async function signMint({ signer, to, amount, ipfsHash }) {
@@ -62,7 +62,7 @@ describe("CarbonToken", function () {
 
   beforeEach(async function () {
     CarbonToken = await ethers.getContractFactory("CarbonToken");
-    [owner, addr1, addr2, ...signers] = await ethers.getSigners();
+    [owner, addr1, addr2] = await ethers.getSigners();
     authorizedMessage = "skripsi_mufidus_sani";
     carbonToken = await CarbonToken.deploy(owner.address, authorizedMessage);
     await carbonToken.waitForDeployment();
@@ -108,7 +108,7 @@ describe("CarbonToken", function () {
 
     await expect(
       carbonToken.connect(owner).mint(addr2.address, amount, ipfsHash, sig2)
-    ).to.be.revertedWith("Certificate already minted");
+    ).to.be.revertedWithCustomError(carbonToken, "CertificateAlreadyMinted");
   });
 
   it("Should list tokens for sale with correct signature", async function () {
