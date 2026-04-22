@@ -42,7 +42,7 @@ app.post("/api/pinata/pinJSON", async (req, res) => {
     }
 
     // Accept either:
-    // - { name, content: {...} }
+    // - { name, content}
     // - {...} (pins the whole object, without a name)
     const name = typeof req.body.name === "string" ? req.body.name : undefined;
     const content =
